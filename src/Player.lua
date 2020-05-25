@@ -14,6 +14,7 @@ function Player:init(def)
     Entity.init(self, def)
     self.score = 0
     self.key = false
+    self.flag = false
 end
 
 function Player:update(dt)
@@ -71,6 +72,9 @@ function Player:checkObjectCollisions()
 
     for k, object in pairs(self.level.objects) do
         if object:collides(self) then
+            if object.collidable and not object.collidableJumpOnly then
+            	object.onCollide(object,self)
+            end
             if object.solid then
                 table.insert(collidedObjects, object)
             elseif object.consumable then

@@ -26,6 +26,9 @@ function LevelMaker.generate(width, height)
 	local keyPosColumn = math.random(math.floor(width/5),math.floor(width/2))
 	local keyblockPosColumn = math.random(math.floor(width/2+1),math.floor(width*0.8))
 	local keyBlockSet = 1+math.random(3)
+	
+	-- flag params
+	local flagPolePosColumn = width - 3
 
     -- insert blank tables into tiles for later access
     for x = 1, height do
@@ -43,7 +46,7 @@ function LevelMaker.generate(width, height)
         end
 
         -- chance to just be emptiness
-        if math.random(7) == 1 and x ~= keyPosColumn and x ~=keyBlockPosColumn then
+        if math.random(7) == 1 and x ~= keyPosColumn and x ~=keyBlockPosColumn and x ~=flagPolePosColumn then
             for y = 7, height do
                 table.insert(tiles[y],
                     Tile(x, y, tileID, nil, tileset, topperset))
@@ -71,7 +74,6 @@ function LevelMaker.generate(width, height)
 
                         -- make it a random variant
                         frame = keyBlockSet,
-                        collidable = true,
                         solid = false,
                         consumable = true,
                         
@@ -83,13 +85,14 @@ function LevelMaker.generate(width, height)
                     }
                 )
             elseif x == keyblockPosColumn then
+            	
             	table.insert(objects,
 
                     -- jump key-block
                     GameObject {
                         texture = 'keys_and_locks',
                         x = (x - 1) * TILE_SIZE,
-                        y = (blockHeight - 1) * TILE_SIZE,
+                        y = (4 - 1) * TILE_SIZE,
                         width = 16,
                         height = 16,
 
@@ -113,11 +116,120 @@ function LevelMaker.generate(width, height)
                                	end
                                
                                	player.key = false
+                               	player.flag = true
                             
 							else
                             	gSounds['empty-block']:play()
                             end
                         end
+                    }
+                )
+            elseif x == flagPolePosColumn then
+            	table.insert(objects,
+
+                    -- Pole Top
+                    GameObject {
+                        texture = 'flags',
+                        x = (x - 1) * TILE_SIZE,
+                        y = (4 - 1) * TILE_SIZE,
+                        width = 16,
+                        height = 48,
+
+                        -- make it a random variant
+                        frameSetName = 'polesets',
+                        frameSet = 5,
+                        frame = 1,
+                        collidable = true,
+                        solid = false,
+                        consumable = false,
+
+                        -- collision function takes itself
+                        onCollide = function(obj,player)
+
+                            -- spawn a gem if we haven't already hit the block
+                            if player.flag then
+                            	-- maintain reference so we can set it to nil
+                                local flagObj = GameObject {
+                                    texture = 'flags',
+                                    x = (x - 1) * TILE_SIZE + TILE_SIZE / 2,
+                                    y = (6 - 1) * TILE_SIZE,
+                                    width = 16,
+                                    height = 16,
+                                    frameSetName = 'flagsets',
+                        			frameSet = 3,
+                        			frame = 3,
+                                    solid = false,
+                                }
+                                    
+                                -- make the gem move up from the block and play a sound
+                                Timer.tween(0.5, {
+                                    [flagObj] = {y = (4 - 1) * TILE_SIZE}
+                                }):finish(function()
+                    				Timer.every(0.2, function()
+                    					if flagObj.frame ~= 1 then
+                    						flagObj.frame = 1
+                    					else 
+                    						flagObj.frame = 2
+                    					end
+                    				end)
+                				end)
+                				
+                				Timer.after(5, function()
+                    				gStateMachine:change('play', {
+        								gameLvl = player.level.gameLvl + 1,
+        								width = 100,
+        								player = player
+                    				})
+                    			end)
+                				
+                                table.insert(objects, flagObj)
+                            
+                                gSounds['powerup-reveal']:play()
+                               
+                               	player.flag = false
+                               	
+                            end
+                        end
+                    }
+                )
+                
+            	table.insert(objects,
+                    
+                    -- Pole middle
+                    GameObject {
+                        texture = 'flags',
+                        x = (x - 1) * TILE_SIZE,
+                        y = (5 - 1) * TILE_SIZE,
+                        width = 16,
+                        height = 16,
+
+                        -- make it a random variant
+                        frameSetName = 'polesets',
+                        frameSet = 5,
+                        frame = 2,
+                        collidable = false,
+                        solid = false,
+                        consumable = false,
+                    }
+                )
+                
+            	table.insert(objects,
+                    
+                    -- Pole bottom
+                    GameObject {
+                        texture = 'flags',
+                        x = (x - 1) * TILE_SIZE,
+                        y = (6 - 1) * TILE_SIZE,
+                        width = 16,
+                        height = 16,
+
+                        -- make it a random variant
+                        frameSetName = 'polesets',
+                        frameSet = 5,
+                        frame = 3,
+                        collidable = false,
+                        solid = false,
+                        consumable = false,
                     }
                 )
             -- chance to generate a pillar
@@ -161,7 +273,7 @@ function LevelMaker.generate(width, height)
             end
 
             -- chance to spawn a block
-            if math.random(10) == 1 then
+            if x ~= keyblockPosColumn and x ~= flagPolePosColumn and math.random(10) == 1 then
                 table.insert(objects,
 
                     -- jump block
@@ -174,6 +286,7 @@ function LevelMaker.generate(width, height)
 
                         -- make it a random variant
                         frame = math.random(#JUMP_BLOCKS),
+                        collidableJumpOnly = true,
                         collidable = true,
                         hit = false,
                         solid = true,
@@ -195,7 +308,6 @@ function LevelMaker.generate(width, height)
                                         width = 16,
                                         height = 16,
                                         frame = math.random(#GEMS),
-                                        collidable = true,
                                         consumable = true,
                                         solid = false,
 

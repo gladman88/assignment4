@@ -10,25 +10,27 @@ PlayState = Class{__includes = BaseState}
 function PlayState:init()
     self.camX = 0
     self.camY = 0
-    local mapHeightInTiles = 10 
-    self.level = LevelMaker.generate(100, mapHeightInTiles)
-    self.tileMap = self.level.tileMap
+    self.mapHeightInTiles = 10
     self.background = math.random(3)
     self.backgroundX = 0
 
     self.gravityOn = true
     self.gravityAmount = 6
 
-	-- Start pos for Player to prevent "Fail Start"
-	columnCounter = 1
-	playerPos = 0
-	while self.tileMap.tiles[10][columnCounter].id == TILE_ID_EMPTY do
-		columnCounter = columnCounter + 1
-		playerPos = playerPos + TILE_SIZE
-	end
+end
 
-    self.player = Player({
-        x = playerPos, 
+function PlayState:enter(params)
+	self.mapWidthInTiles = params.mapWidthInTiles or 100
+	
+	self.gameLvl = params.gameLvl or 1
+	
+    self.level = LevelMaker.generate(self.mapWidthInTiles + (self.gameLvl - 1) * 10, self.mapHeightInTiles)
+    self.tileMap = self.level.tileMap
+    
+    self.level.gameLvl = self.gameLvl
+	
+	self.player = params.player or Player({
+        x = 0, 
         y = 0,
         width = 16, height = 20,
         texture = 'green-alien',
@@ -41,10 +43,23 @@ function PlayState:init()
         map = self.tileMap,
         level = self.level
     })
-
-    self:spawnEnemies()
+    
+	--reset params of player
+	self.player.x = 0
+	self.player.y = 0
+	self.player.map = self.tileMap
+	self.player.level = self.level
+	
+	-- Start pos for Player to prevent "Fail Start"
+	columnCounter = 1
+	while self.tileMap.tiles[self.mapHeightInTiles][columnCounter].id == TILE_ID_EMPTY do
+		columnCounter = columnCounter + 1
+		self.player.x = self.player.x + TILE_SIZE
+	end
 
     self.player:changeState('falling')
+    
+    self:spawnEnemies()
 end
 
 function PlayState:update(dt)
@@ -84,16 +99,23 @@ function PlayState:render()
     self.player:render()
     love.graphics.pop()
     
+    -- render game level
+    love.graphics.setFont(gFonts['medium'])
+    love.graphics.setColor(0, 0, 0, 255)
+    love.graphics.print("Lvl:"..tostring(self.gameLvl), 5, 5)
+    love.graphics.setColor(255, 255, 255, 255)
+    love.graphics.print("Lvl:"..tostring(self.gameLvl), 4, 4)
+    
     -- render score
     love.graphics.setFont(gFonts['medium'])
     love.graphics.setColor(0, 0, 0, 255)
-    love.graphics.print(tostring(self.player.score), 5, 5)
+    love.graphics.print(tostring(self.player.score), 65, 5)
     love.graphics.setColor(255, 255, 255, 255)
-    love.graphics.print(tostring(self.player.score), 4, 4)
+    love.graphics.print(tostring(self.player.score), 64, 4)
     
     -- render key-interface
     if self.player.key then
-    	love.graphics.draw(gTextures['keys_and_locks'], gFrames['keys_and_locks'][1], 60, 5) 
+    	love.graphics.draw(gTextures['keys_and_locks'], gFrames['keys_and_locks'][1], 130, 5) 
     end
 end
 

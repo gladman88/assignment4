@@ -62,6 +62,51 @@ function GenerateTileSets(quads, setsX, setsY, sizeX, sizeY)
     return tilesets
 end
 
+function GeneratePoleSets(quads)
+	setsX, setsY, sizeX, sizeY = 6, 1, 1, 3
+    local tilesets = {}
+    local tableCounter = 0
+    local sheetWidth = 9
+    local sheetHeight = 4
+
+     -- for each tile set on the X and Y
+    for tilesetX = 1, setsX do
+            
+        -- tileset table
+        table.insert(tilesets, {})
+        tableCounter = tableCounter + 1
+
+        for y = 1, 1 + sizeY do
+            table.insert(tilesets[tableCounter], quads[sheetWidth * (y - 1) + tilesetX])
+        end
+    end
+
+    return tilesets
+end
+
+function GenerateFlagSets(quads, setsX, setsY, sizeX, sizeY)
+	setsX, setsY, sizeX, sizeY = 3, 4, 3, 1
+    local tilesets = {}
+    local tableCounter = 0
+    local sheetWidth = setsX * sizeX
+    local sheetHeight = setsY * sizeY
+
+    -- for each tile set on the X and Y
+    for tilesetY = 1, setsY do
+            
+        -- tileset table
+        table.insert(tilesets, {})
+        tableCounter = tableCounter + 1
+        
+        for x = sizeX * (3 - 1) + 1, sizeX * (3 - 1) + 1 + sizeX do
+            table.insert(tilesets[tableCounter], quads[sheetWidth * (tilesetY - 1) + x])
+    	end
+    end
+
+    return tilesets
+end
+
+
 --[[
     Recursive table printing function.
     https://coronalabs.com/blog/2014/09/02/tutorial-printing-table-contents/

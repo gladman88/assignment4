@@ -58,9 +58,10 @@ function PlayerJumpState:update(dt)
     -- check if we've collided with any collidable game objects
     for k, object in pairs(self.player.level.objects) do
         if object:collides(self.player) then
+            if object.collidable then
+            	object.onCollide(object,self.player)
+            end
             if object.solid then
-                object.onCollide(object,self.player)
-
                 self.player.y = object.y + object.height
                 self.player.dy = 0
                 self.player:changeState('falling')
